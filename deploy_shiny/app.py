@@ -63,10 +63,20 @@ VAR_CONFIG = {
 # DATA LOADING (SIMPLIFIED)
 # ==============================================================================
 
+from pathlib import Path
+
+# Global Error Holder
+DATA_LOAD_ERROR = None
+
 def load_data():
+    global DATA_LOAD_ERROR
     try:
-        print("Loading final_app_data.geojson...", flush=True)
-        gdf = gpd.read_file("final_app_data.geojson")
+        # Robust path resolution using pathlib
+        app_dir = Path(__file__).parent
+        data_path = app_dir / "final_app_data.geojson"
+        
+        print(f"Loading data from: {data_path}", flush=True)
+        gdf = gpd.read_file(data_path)
         
         # Ensure correct projection for web maps
         if gdf.crs is not None and gdf.crs != "EPSG:4326":
@@ -74,6 +84,8 @@ def load_data():
             
         return gdf
     except Exception as e:
+        # Store error for UI display
+        DATA_LOAD_ERROR = f"{type(e).__name__}: {str(e)}"
         print(f"CRITICAL ERROR: {e}", file=sys.stderr)
         return gpd.GeoDataFrame()
 
@@ -92,10 +104,15 @@ GEOID_CHOICES = dict(sorted(GEOID_CHOICES.items(), key=lambda item: item[1]))
 
 # Load specific grocery points if available (Optional)
 try:
-    grocery_gdf = gpd.read_file("groceries.geojson")
+    app_dir = Path(__file__).parent
+    grocery_path = app_dir / "groceries.geojson"
+    print(f"Loading grocery data from: {grocery_path}", flush=True)
+    
+    grocery_gdf = gpd.read_file(grocery_path)
     if grocery_gdf.crs != "EPSG:4326":
         grocery_gdf = grocery_gdf.to_crs("EPSG:4326")
-except Exception:
+except Exception as e:
+    print(f"Warning: Could not load groceries: {e}", file=sys.stderr)
     grocery_gdf = None
 
 # ==============================================================================
@@ -208,7 +225,11 @@ app_ui = ui.page_fluid(
             
             ui.hr(),
             ui.input_action_button("btn_clear", "Clear Map", class_="btn-danger", style="width: 100%;"),
-            ui.markdown("**Controls:**\nSelect a layer to visualize. Click 'Clear Map' to reset.")
+            ui.markdown("**Controls:**\nSelect a layer to visualize. Click 'Clear Map' to reset."),
+            ui.div(
+                 ui.markdown("**Note:** Immutable green points are the known grocery stores."),
+                 style="margin-top: 20px; font-size: 13px; color: #155724; background-color: #d4edda; border-color: #c3e6cb; padding: 10px; border-radius: 5px;"
+            )
         ),
         ui.card(
             ui.output_ui("main_map_ui"),
@@ -220,7 +241,7 @@ app_ui = ui.page_fluid(
     #### Presumptive norms lead to disproportionate effects.
     Take the approach the USDA uses for the “food desert” flag (LILA tracts) in the <a href="https://www.ers.usda.gov/data-products/food-access-research-atlas/" target="_blank">Food Access Research Atlas</a>:
     
-    > “A tract is classified as ‘low-income, low-access’ (LILA) if it meets both low-income criteria (poverty rate ≥20% or median family income ≤80% of state/metro median) and low-access criteria (at least 500 people or 33% of the population more than 1 mile [urban] or 10 miles [rural] from the nearest supermarket, supercenter, or large grocery), as defined by <a href="https://www.ers.usda.gov" target="_blank">USDA ERS (2023)</a>.”
+    A tract is classified as ‘low-income, low-access’ (LILA) if it meets both low-income criteria (poverty rate ≥20% or median family income ≤80% of state/metro median) and low-access criteria (at least 500 people or 33% of the population more than 1 mile [urban] or 10 miles [rural] from the nearest supermarket, supercenter, or large grocery), as defined by <a href="https://www.ers.usda.gov" target="_blank">USDA ERS (2023)</a>.
 
     In summation; resource proximity. How close are you or I to the resource states how accessible it is to us. There are refinements to this where they add in the vehicle by household percentage. 
     As a (recent) non-driver due to disability in a small city with sub-optimal transit I know first hand how inaccurate these measures are. 
@@ -595,8 +616,18 @@ def server(input, output, session):
         try:
             var_id = selected_var()
             
-            if full_data.empty:
-                return ui.HTML("<div style='color:red;'>Error: Could not load final_app_data.geojson</div>")
+            try:
+                # Check for cached error first
+                if DATA_LOAD_ERROR:
+                    return ui.HTML(f"<div style='color:red;'><b>Data Loading Failed:</b> {DATA_LOAD_ERROR}</div>")
+
+                data = full_data
+            except Exception as e:
+                return ui.HTML(f"<div style='color:red;'><b>Data Load Exception:</b> {str(e)}</div>")
+
+            if data.empty:
+                 return ui.HTML("<div style='color:red;'>Error: Data is empty. Check logs.</div>")
+
 
             # --- GENERATE MAP (Base) ---
             m = folium.Map(location=[30.87, -84.57], zoom_start=10, tiles="OpenStreetMap")

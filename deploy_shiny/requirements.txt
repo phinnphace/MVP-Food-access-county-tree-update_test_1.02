@@ -6,5 +6,7 @@ geopandas
 mapclassify
 branca
 requests
+scipy
+scikit-learn
 altair
 
