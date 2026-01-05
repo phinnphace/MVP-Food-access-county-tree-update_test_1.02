@@ -5,4 +5,5 @@ pandas
 geopandas
 mapclassify
 branca
-altairshinylive
+altair
+
