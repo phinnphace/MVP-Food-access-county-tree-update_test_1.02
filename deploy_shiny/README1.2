@@ -1,0 +1,28 @@
+## 🚀 Food Vulnerability Dashboard (Decatur County, GA)
+**Version:** 1.2 — July 2025  
+**Live App:** https://phinnphace.github.io/MVP-Food-access-county/
+
+**Project Overview:**  
+This project builds on Version 1.0, migrating from Streamlit to PyShiny/Shinylive for improved mapping and full client-side deployment (Python in-browser via Wasm). The current phase is a methods testbed: Decatur County serves as a pilot case to prototype and surface analytic pain points in food access vulnerability modeling.
+
+**Key Features:**
+- **Custom Vulnerability Index:** Flexible, weighted/unweighted scoring options for transparency.
+- **Systemic Penalties:** Built-in penalties for transit deserts, digital divides, and rural exclusion.
+- **Dynamic LILA Flag:** On-the-fly calculation of USDA "Low Income Low Access" (LILA) tracts per ERS 2020 methodology.
+- **Equity/Intersectionality Commitment:** All measures are contextualized for rurality and resource deserts; see `METHODS.md` for anti-flattening, anti-erasure rationale.
+
+**Major Changes Since v1.0:**
+- Migration to PyShiny (Shinylive) for in-browser mapping (GeoPandas, Folium, Altair).
+- Addition of tract-level areal interpolation for SDOH features.
+- Expanded variable set and refined vulnerability scoring logic.
+
+**Limitations & Next Steps:**
+- Static model tested only on Decatur County.
+- Supermarket data cross-validated against OSM but not exhaustively field-verified.
+- Contextual weighting remains under development; see [changelog](CHANGELOG.md) for progress.
+
+**Provenance:**  
+Original README (v1.0) included in repo for documentation traceability.
+
+**Contact/Issues:**  
+For questions, equity concerns,collabs, critique, offers of help or requests, please open an issue or email phinnphace@protonmail.com.
