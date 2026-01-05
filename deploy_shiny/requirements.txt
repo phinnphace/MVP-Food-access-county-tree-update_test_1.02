@@ -1,0 +1,8 @@
+shiny
+shinywidgets
+folium
+pandas
+geopandas
+mapclassify
+branca
+altairshinylive
